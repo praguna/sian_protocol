@@ -1,3 +1,6 @@
+ ### Algorithm:
+ ![alt text](./resources/scheme.png)
+ 
  ### Setup:
  ```
  pip install -r requirements.txt
@@ -21,9 +24,15 @@ Run as :
 #### Example   :
  ```
  python party_2_random_socket.py 6000 
- python party_1_random_socket.py 6000 0.53 0.25 10
+ python party_1_random_socket.py 6000 0.53 0 10
  ```
+ Something like this can be observed : <br><br>
+ ![alt text](./resources/out.png)
+
+
+ 
 
  #### For larger feature vectors : 
  * Adjust the angular and radial resolution parameters.
  * Edit random_client_key.json with the corresponding sized keys, set key_default variable
+ * Use https://www.browserling.com/tools/random-bin for large generation
