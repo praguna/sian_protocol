@@ -79,7 +79,7 @@ def gaborconvolve_f(img, minw_length, mult, sigma_f):
 ##########################################################################
 # Function to extract the feature for the matching process
 ##########################################################################
-def extractFeature(img_filename, eyelashes_threshold=80, radial_resolution = 10, angular_resolution = 100):
+def extractFeature(img_filename, eyelashes_threshold=90, radial_resolution = 10, angular_resolution = 100):
     """
     Extract features from an iris image
     """
