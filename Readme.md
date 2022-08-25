@@ -35,4 +35,4 @@ Run as :
  #### For larger feature vectors : 
  * Adjust the angular and radial resolution parameters.
  * Edit random_client_key.json with the corresponding sized keys, set key_default variable
- * Use https://www.browserling.com/tools/random-bin for large generation
+ * Use https://www.browserling.com/tools/random-bin for large vector generation
