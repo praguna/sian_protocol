@@ -14,11 +14,11 @@
 
 ### Single image with custom noise
 
-To test the protocol in all possible cases, we can introduce custom noise in feature and mask vectors. It compares the noise introduced image with the reference at the server.
+To test the protocol in all possible cases, we can introduce custom noise in feature and noise vectors. It compares the noise introduced image with the reference at the server.
 
 Run as :
  ```
- python <party_type_random_socket.py> <port> <custom mask noise in [0, 1]> <custom feature noise in [0, 1]> <k value / default 0>
+ python <party_type_random_socket.py> <port> <custom noise vector noise in [0, 1]> <custom feature noise in [0, 1]> <k value / default 0>
  ```
 
 #### Example   :
