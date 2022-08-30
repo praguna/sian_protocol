@@ -1,4 +1,3 @@
-from pickletools import int4
 from time import time
 from utils import Party, M as AND_MATRIX, and_on_numpy2D, convert_to_str, xor_on_numpy1D, xor_on_numpy2D, split_by_curly, serialize_nd_array
 import numpy as np
