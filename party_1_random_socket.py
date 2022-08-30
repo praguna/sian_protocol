@@ -16,7 +16,7 @@ with open('random_client_key.json', 'r') as f:
 
 
 if __name__=='__main__':
-    img_path='tests/p1_1.bmp'
+    img_path='tests/p1_2.bmp'
     template, mask, _ = extractandenconding.extractFeature(img_path, radial_resolution=16, angular_resolution=64)
     X = template.flatten().astype(int)
     M = mask.flatten().astype(int)

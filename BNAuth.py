@@ -326,7 +326,7 @@ class BNAuth(object):
         exit(0)
     
 
-    def not_mask_secure_and(self):
+    def not_mask_secure_and(self, noise = False):
         '''
         returns not(M1) ^ not(M2) 
         '''
@@ -337,14 +337,14 @@ class BNAuth(object):
         while self.selected_octect_index == None or len(self.selected_octect_index) == 0:
             self.selected_octect_index = self.perform_distillation(M_X1, M_Y1)
         x = time()
-        batch, k = 256, 0
+        batch, k = 128, 0
         octets = self.fetch_octect_bulk(batch)
         for i in range(self.d):
             if k == batch: 
                 octets = self.fetch_octect_bulk(batch)
                 k = 0
             w, v = M_X1[i], M_Y1[i]
-            Z = self.perform_computation_phase_v2(self.octects[octets[k]], w, v)
+            Z = self.perform_computation_phase_v2(self.octects[octets[k]], w, v, noise)
             k+=1
             a.append(Z) 
         self.send_to_peer(json.dumps({'xor' : serialize_nd_array(a)}))                        
@@ -360,7 +360,7 @@ class BNAuth(object):
         '''
         self.octects = self.preprocess()
 
-        R = self.not_mask_secure_and()
+        R = self.not_mask_secure_and(noise)
         self.X = np.logical_and(R, self.X).astype(np.int8)
 
         self.X1, _ = self.create_distributed_vectors(self.X)
