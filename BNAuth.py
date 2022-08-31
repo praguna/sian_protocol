@@ -34,6 +34,8 @@ class BNAuth(object):
         self.T = []
         self.visited_mask_pos = np.zeros_like(self.N)
         self.count  = 0
+        self.buffer = b''
+        self.end = b'END'
         assert self.m > 0
     
 
@@ -41,9 +43,23 @@ class BNAuth(object):
         '''
         sends it to the peer socket
         '''
-        self.socket.sendall(bytes(data, encoding="utf-8"))
+        self.socket.sendall(bytes(data, encoding="utf-8") + self.end)
         self.count+=len(data)
         # print(f'sent : {data}')
+
+    def process_bytes(self, decompress_func = None):
+        '''
+        return the json object recieved
+        '''
+        b : bytes = self.message_queue.popleft()
+        if decompress_func : 
+            self.count+=len(b)
+            msg = str(decompress_func(b), 'utf-8')
+        else:
+            msg = b.decode('utf-8')
+            self.count += len(msg)
+        return json.loads(msg)
+
 
     
     def recieve_from_peer(self, decompress_func = None, num_bytes = 126000):
@@ -51,18 +67,20 @@ class BNAuth(object):
         decode and extract data from the peer
         '''
         if len(self.message_queue) > 0:
-            v = self.message_queue.popleft()
-            return json.loads(v)
-        if decompress_func : 
-            b = self.socket.recv(num_bytes)
-            self.count+=len(b)
-            msg = str(decompress_func(b), 'utf-8')
-        else:
-            msg = self.socket.recv(num_bytes).decode('utf-8')
-            self.count += len(msg)
-        self.message_queue.extend(split_by_curly(msg))
-        # print(f'received : {self.message_queue}')
-        return json.loads(self.message_queue.popleft())
+            return self.process_bytes(decompress_func)
+    
+        b = self.socket.recv(num_bytes)
+
+        while not b.endswith(self.end):
+            b+=self.socket.recv(num_bytes)
+            
+        buf_split = b.split(self.end)
+
+        self.message_queue.extend(buf_split)
+
+        self.message_queue.pop() # empty buffer
+
+        return self.process_bytes(decompress_func)
 
 
     def recieve_has_expected_noise(self, pos : np.ndarray, masked_xor)->bool:
@@ -181,13 +199,15 @@ class BNAuth(object):
         '''
         def P1():
             idx = np.random.choice(list(self.selected_octect_index), batch_size)
-            msg = bytes(json.dumps({'idx' : serialize_nd_array(idx)}),'utf-8') 
-            com_msg = gzip.compress(msg)
+            msg = bytes(json.dumps({'idx' : serialize_nd_array(idx)}),'utf-8')
+            com_msg = gzip.compress(msg) + self.end
             self.count+=len(com_msg)
             self.socket.sendall(com_msg)
+            self.socket.recvmsg(1)[0]
             return idx
         def P2():
             idx = self.recieve_from_peer(decompress_func=gzip.decompress)['idx']
+            self.socket.sendall(struct.pack('?', True))
             return idx
         idx = P1() if self.party_type == Party.P1 else P2()
         return idx
