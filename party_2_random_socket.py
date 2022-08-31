@@ -44,7 +44,7 @@ if __name__=='__main__':
             e = time.time()
             # print(f'time taken : {e-s}s')
             A.append(e-s)
-            print(sum(A) / len(A))
+            print('Latency :', sum(A) / len(A))
             f = False
             if a < 0: 
                 f = True

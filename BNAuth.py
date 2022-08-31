@@ -3,7 +3,7 @@ from utils import Party, M as AND_MATRIX, and_on_numpy2D, convert_to_str, xor_on
 import numpy as np
 import socket, json, tqdm
 from collections import deque
-import os, struct
+import os, struct, gzip
 
 # setting the seed 
 # np.random.seed(42)
@@ -42,19 +42,25 @@ class BNAuth(object):
         sends it to the peer socket
         '''
         self.socket.sendall(bytes(data, encoding="utf-8"))
+        self.count+=len(data)
         # print(f'sent : {data}')
 
     
-    def recieve_from_peer(self, num_bytes = 126000):
+    def recieve_from_peer(self, decompress_func = None, num_bytes = 126000):
         '''
         decode and extract data from the peer
         '''
         if len(self.message_queue) > 0:
             v = self.message_queue.popleft()
             return json.loads(v)
-        msg = self.socket.recv(num_bytes).decode('utf-8')
+        if decompress_func : 
+            b = self.socket.recv(num_bytes)
+            self.count+=len(b)
+            msg = str(decompress_func(b), 'utf-8')
+        else:
+            msg = self.socket.recv(num_bytes).decode('utf-8')
+            self.count += len(msg)
         self.message_queue.extend(split_by_curly(msg))
-        self.count += len(msg)
         # print(f'received : {self.message_queue}')
         return json.loads(self.message_queue.popleft())
 
@@ -175,10 +181,13 @@ class BNAuth(object):
         '''
         def P1():
             idx = np.random.choice(list(self.selected_octect_index), batch_size)
-            self.send_to_peer(json.dumps({'idx' : serialize_nd_array(idx)}))
+            msg = bytes(json.dumps({'idx' : serialize_nd_array(idx)}),'utf-8') 
+            com_msg = gzip.compress(msg)
+            self.count+=len(com_msg)
+            self.socket.sendall(com_msg)
             return idx
         def P2():
-            idx = self.recieve_from_peer()['idx']
+            idx = self.recieve_from_peer(decompress_func=gzip.decompress)['idx']
             return idx
         idx = P1() if self.party_type == Party.P1 else P2()
         return idx
@@ -343,7 +352,7 @@ class BNAuth(object):
                 octets = self.fetch_octect_bulk(batch)
                 k = 0
             w, v = M_X1[i], M_Y1[i]
-            Z = self.perform_computation_phase_v2(self.octects[octets[k]], w, v, noise)
+            Z = self.perform_computation_phase_v3(self.octects[octets[k]], w, v, noise)
             k+=1
             a.append(Z) 
         self.send_to_peer(json.dumps({'xor' : serialize_nd_array(a)}))                        
@@ -389,6 +398,6 @@ class BNAuth(object):
             W2 = self.recieve_from_peer()['W2']
             s+=self.calculate_sum(W, W2)
 
-        # print(self.count)
+        print('Bandwidth : ', self.count/ 1000, 'KB')
         tbits = self.d - np.sum(R == 0)
         return  s / tbits
